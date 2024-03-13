@@ -1,5 +1,3 @@
-import type { Web3Provider } from "@ethersproject/providers";
-import { useWeb3React } from "@web3-react/core";
 import { useEffect, useState } from "react";
 import useUSElectionContract from "../hooks/useUSElectionContract";
 import LoadingSpinner from "./LoadingSpinner";
@@ -16,7 +14,6 @@ export enum Leader {
 }
 
 const USLibrary = ({ contractAddress }: USContract) => {
-  const { account, library } = useWeb3React<Web3Provider>();
   const usElectionContract = useUSElectionContract(contractAddress);
 
   const initialElectionState = {
@@ -46,32 +43,12 @@ const USLibrary = ({ contractAddress }: USContract) => {
     isElectionEnded,
   } = electionState;
 
-  const stateInput = (input) => {
-    setElectionState((prev) => ({
-      ...prev,
-      electionStateName: input.target.value,
-    }));
-  };
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const inputName = e.target.name;
+    const inputValue = e.target.value;
 
-  const bideVotesInput = (input) => {
-    setElectionState((prev) => ({
-      ...prev,
-      votesBiden: input.target.value,
-    }));
-  };
-
-  const trumpVotesInput = (input) => {
-    setElectionState((prev) => ({
-      ...prev,
-      votesTrump: input.target.value,
-    }));
-  };
-
-  const seatsInput = (input) => {
-    setElectionState((prev) => ({
-      ...prev,
-      electionStateSeats: input.target.value,
-    }));
+    setElectionState((prev) => ({ ...prev, [inputName]: inputValue }));
+    setError(undefined);
   };
 
   const submitStateResults = async () => {
@@ -83,13 +60,14 @@ const USLibrary = ({ contractAddress }: USContract) => {
         votesTrump,
         electionStateSeats,
       ];
-      const tx = await usElectionContract.submitStateResult(result);
-      setPendingTransactionHash(tx.hash);
-      await tx.wait();
+      const submitStateResultsTx = await usElectionContract.submitStateResult(
+        result
+      );
+      setPendingTransactionHash(submitStateResultsTx.hash);
       resetForm();
     } catch (err) {
       setLoading(false);
-      setError(JSON.parse(JSON.stringify(err)));
+      setError(err);
     }
   };
 
@@ -112,7 +90,7 @@ const USLibrary = ({ contractAddress }: USContract) => {
       const trump = await usElectionContract.seats(Leader.TRUMP);
       setCurrentSeatsWon({ biden, trump });
     } catch (err) {
-      setError(JSON.parse(JSON.stringify(err)));
+      setError(err);
     }
   };
 
@@ -123,21 +101,21 @@ const USLibrary = ({ contractAddress }: USContract) => {
       );
 
       if (isStateAlreadySubmitted) {
-        return setError("This state has already submitted their results!");
+        return setError({
+          message: "This state has already submitted their results!",
+        });
       }
-      setError(undefined);
     } catch (err) {
-      setError(JSON.parse(JSON.stringify(err)));
+      setError(err);
     }
   };
 
   const endElection = async () => {
     try {
-      const endElectionTx = await usElectionContract.endElection();
-      await endElectionTx.wait();
+      await usElectionContract.endElection();
       electionEnded();
     } catch (err) {
-      setError(JSON.parse(JSON.stringify(err)));
+      setError(err);
     }
   };
 
@@ -149,7 +127,7 @@ const USLibrary = ({ contractAddress }: USContract) => {
         isElectionEnded: electionEndedTx,
       }));
     } catch (err) {
-      setError(JSON.parse(JSON.stringify(err)));
+      setError(err);
     }
   };
 
@@ -185,37 +163,37 @@ const USLibrary = ({ contractAddress }: USContract) => {
             <label>
               State:
               <input
-                onChange={stateInput}
+                onChange={handleInputChange}
                 value={electionStateName}
                 type="text"
-                name="state"
+                name="electionStateName"
               />
             </label>
             <label>
               BIDEN Votes:
               <input
-                onChange={bideVotesInput}
+                onChange={handleInputChange}
                 value={votesBiden}
                 type="number"
-                name="biden_votes"
+                name="votesBiden"
               />
             </label>
             <label>
               TRUMP Votes:
               <input
-                onChange={trumpVotesInput}
+                onChange={handleInputChange}
                 value={votesTrump}
                 type="number"
-                name="trump_votes"
+                name="votesTrump"
               />
             </label>
             <label>
               Seats:
               <input
-                onChange={seatsInput}
+                onChange={handleInputChange}
                 value={electionStateSeats}
                 type="number"
-                name="seats"
+                name="electionStateSeats"
               />
             </label>
           </form>
@@ -245,7 +223,9 @@ const USLibrary = ({ contractAddress }: USContract) => {
         </>
       )}
       {error && (
-        <div className="results-error">{error?.error?.message || error}</div>
+        <div className="results-error">
+          {error?.error?.message || error?.message || "Unexpected error!"}
+        </div>
       )}
     </div>
   );
