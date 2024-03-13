@@ -43,8 +43,8 @@ function Home() {
         {isConnected && (
           <section>
             <NativeCurrencyBalance />
-
-            <TokenBalance tokenAddress={ALBT_TOKEN_ADDRESS} symbol="ALBT" />
+            {/* Not sure wy we need this and will comment it out for now */}
+            {/* <TokenBalance tokenAddress={ALBT_TOKEN_ADDRESS} symbol="ALBT" /> */}
             <USLibrary contractAddress={US_ELECTION_ADDRESS} />
           </section>
         )}
