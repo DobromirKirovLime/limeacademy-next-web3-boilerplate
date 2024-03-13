@@ -129,6 +129,15 @@ const USLibrary = ({ contractAddress }: USContract) => {
     }
   };
 
+  const endElection = async () => {
+    try {
+      const endElectionTx = await usElectionContract.endElection();
+      await endElectionTx.wait();
+    } catch (err) {
+      setError(JSON.parse(JSON.stringify(err)))
+    }
+  };
+
   const resetForm = async () => {
     setElectionState(initialElectionState);
     setPendingTransactionHash("");
@@ -191,7 +200,12 @@ const USLibrary = ({ contractAddress }: USContract) => {
         </label>
       </form>
       <div className="button-wrapper">
-        <button onClick={submitStateResults} disabled={error}>Submit Results</button>
+        <button onClick={submitStateResults} disabled={error}>
+          Submit Results
+        </button>
+        <button onClick={endElection} disabled={error}>
+          End Election
+        </button>
       </div>
       {loading && (
         <div className="results-loading">

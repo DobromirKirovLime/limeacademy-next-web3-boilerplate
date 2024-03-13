@@ -53,6 +53,12 @@ a {
   color: red;
 }
 
+.button-wrapper {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+}
+
 /* LoadingSpinner.tsx */
 .loading-ripple {
   display: inline-block;
