@@ -32,6 +32,16 @@ a {
   flex-wrap: wrap;
 }
 
+.results-seats-won {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+
+  hr {
+    margin: 0;
+  }
+}
+
 .results-loading {
   display: flex;
   flex-direction: column;

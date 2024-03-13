@@ -28,11 +28,16 @@ const USLibrary = ({ contractAddress }: USContract) => {
 
   const [electionState, setElectionState] = useState(initialElectionState);
   const [pendingTransactionHash, setPendingTransactionHash] = useState("");
+  const [currentSeatsWon, setCurrentSeatsWon] = useState({
+    biden: 0,
+    trump: 0,
+  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<any>(undefined);
 
   useEffect(() => {
     getCurrentLeader();
+    getCurrentSeats();
   }, []);
 
   const getCurrentLeader = async () => {
@@ -103,16 +108,32 @@ const USLibrary = ({ contractAddress }: USContract) => {
     }
   };
 
+  const getCurrentSeats = async () => {
+    try {
+      const biden = await usElectionContract.seats(Leader.BIDEN);
+      const trump = await usElectionContract.seats(Leader.TRUMP);
+      setCurrentSeatsWon({ biden, trump });
+    } catch (err) {
+      setError(JSON.parse(JSON.stringify(err)));
+    }
+  };
+
   const resetForm = async () => {
     setElectionState(initialElectionState);
     setPendingTransactionHash("");
     setLoading(false);
     getCurrentLeader();
+    getCurrentSeats();
   };
 
   return (
     <div className="results-form">
-      <p>Current Leader is: {currentLeader}</p>
+      <h3>Current Leader is: {currentLeader}</h3>
+      <div className="results-seats-won">
+        <p>Biden seats won: {currentSeatsWon.biden}</p>
+        <hr />
+        <p>Trump seats won: {currentSeatsWon.trump}</p>
+      </div>
       <form className="results-form-element">
         <label>
           State:
