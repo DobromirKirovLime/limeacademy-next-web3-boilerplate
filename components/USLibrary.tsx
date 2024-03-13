@@ -29,6 +29,7 @@ const USLibrary = ({ contractAddress }: USContract) => {
   const [electionState, setElectionState] = useState(initialElectionState);
   const [pendingTransactionHash, setPendingTransactionHash] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<any>(undefined);
 
   useEffect(() => {
     getCurrentLeader();
@@ -84,17 +85,22 @@ const USLibrary = ({ contractAddress }: USContract) => {
   } = electionState;
 
   const submitStateResults = async () => {
-    setLoading(true);
-    const result: any = [
-      electionStateName,
-      votesBiden,
-      votesTrump,
-      electionStateSeats,
-    ];
-    const tx = await usElectionContract.submitStateResult(result);
-    setPendingTransactionHash(tx.hash);
-    await tx.wait();
-    resetForm();
+    try {
+      setLoading(true);
+      const result: any = [
+        electionStateName,
+        votesBiden,
+        votesTrump,
+        electionStateSeats,
+      ];
+      const tx = await usElectionContract.submitStateResult(result);
+      setPendingTransactionHash(tx.hash);
+      await tx.wait();
+      resetForm();
+    } catch (err) {
+      setLoading(false);
+      setError(JSON.parse(JSON.stringify(err)));
+    }
   };
 
   const resetForm = async () => {
@@ -160,6 +166,7 @@ const USLibrary = ({ contractAddress }: USContract) => {
           </a>
         </div>
       )}
+      {error && <div className="results-error">{error?.error?.message}</div>}
     </div>
   );
 };

@@ -39,6 +39,10 @@ a {
   gap: 20px;
 }
 
+.results-error {
+  color: red;
+}
+
 /* LoadingSpinner.tsx */
 .loading-ripple {
   display: inline-block;
