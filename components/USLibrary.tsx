@@ -25,6 +25,7 @@ const USLibrary = ({ contractAddress }: USContract) => {
     votesBiden: 0,
     votesTrump: 0,
     electionStateSeats: 0,
+    isElectionEnded: false,
   };
 
   const [electionState, setElectionState] = useState(initialElectionState);
@@ -42,6 +43,7 @@ const USLibrary = ({ contractAddress }: USContract) => {
     votesTrump,
     electionStateName,
     electionStateSeats,
+    isElectionEnded,
   } = electionState;
 
   const stateInput = (input) => {
@@ -133,8 +135,21 @@ const USLibrary = ({ contractAddress }: USContract) => {
     try {
       const endElectionTx = await usElectionContract.endElection();
       await endElectionTx.wait();
+      electionEnded();
     } catch (err) {
-      setError(JSON.parse(JSON.stringify(err)))
+      setError(JSON.parse(JSON.stringify(err)));
+    }
+  };
+
+  const electionEnded = async () => {
+    try {
+      const electionEndedTx = await usElectionContract.electionEnded();
+      setElectionState((prev) => ({
+        ...prev,
+        isElectionEnded: electionEndedTx,
+      }));
+    } catch (err) {
+      setError(JSON.parse(JSON.stringify(err)));
     }
   };
 
@@ -151,6 +166,7 @@ const USLibrary = ({ contractAddress }: USContract) => {
   useEffect(() => {
     getCurrentLeader();
     getCurrentSeats();
+    electionEnded();
   }, []);
 
   return (
@@ -161,66 +177,72 @@ const USLibrary = ({ contractAddress }: USContract) => {
         <hr />
         <p>Trump seats won: {currentSeatsWon.trump}</p>
       </div>
-      <form className="results-form-element">
-        <label>
-          State:
-          <input
-            onChange={stateInput}
-            value={electionStateName}
-            type="text"
-            name="state"
-          />
-        </label>
-        <label>
-          BIDEN Votes:
-          <input
-            onChange={bideVotesInput}
-            value={votesBiden}
-            type="number"
-            name="biden_votes"
-          />
-        </label>
-        <label>
-          TRUMP Votes:
-          <input
-            onChange={trumpVotesInput}
-            value={votesTrump}
-            type="number"
-            name="trump_votes"
-          />
-        </label>
-        <label>
-          Seats:
-          <input
-            onChange={seatsInput}
-            value={electionStateSeats}
-            type="number"
-            name="seats"
-          />
-        </label>
-      </form>
-      <div className="button-wrapper">
-        <button onClick={submitStateResults} disabled={error}>
-          Submit Results
-        </button>
-        <button onClick={endElection} disabled={error}>
-          End Election
-        </button>
-      </div>
-      {loading && (
-        <div className="results-loading">
-          <div>
-            <div>Pending transaction</div>
-            <LoadingSpinner />
+      {isElectionEnded ? (
+        <h3>Election has ended!</h3>
+      ) : (
+        <>
+          <form className="results-form-element">
+            <label>
+              State:
+              <input
+                onChange={stateInput}
+                value={electionStateName}
+                type="text"
+                name="state"
+              />
+            </label>
+            <label>
+              BIDEN Votes:
+              <input
+                onChange={bideVotesInput}
+                value={votesBiden}
+                type="number"
+                name="biden_votes"
+              />
+            </label>
+            <label>
+              TRUMP Votes:
+              <input
+                onChange={trumpVotesInput}
+                value={votesTrump}
+                type="number"
+                name="trump_votes"
+              />
+            </label>
+            <label>
+              Seats:
+              <input
+                onChange={seatsInput}
+                value={electionStateSeats}
+                type="number"
+                name="seats"
+              />
+            </label>
+          </form>
+          <div className="button-wrapper">
+            <button onClick={submitStateResults} disabled={error}>
+              Submit Results
+            </button>
+            <button onClick={endElection} disabled={error}>
+              End Election
+            </button>
           </div>
-          <div>Transaction HASH: {pendingTransactionHash}</div>
-          <a
-            href={`https://sepolia.etherscan.io/tx/${pendingTransactionHash}`}
-            target="_blank"
-          >
-            Etherscan URL
-          </a>
-        </div>
+          {loading && (
+            <div className="results-loading">
+              <div>
+                <div>Pending transaction</div>
+                <LoadingSpinner />
+              </div>
+              <div>Transaction HASH: {pendingTransactionHash}</div>
+              <a
+                href={`https://sepolia.etherscan.io/tx/${pendingTransactionHash}`}
+                target="_blank"
+              >
+                Etherscan URL
+              </a>
+            </div>
+          )}
+        </>
       )}
       {error && (
         <div className="results-error">{error?.error?.message || error}</div>
