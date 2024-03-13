@@ -161,7 +161,10 @@ const USLibrary = ({ contractAddress }: USContract) => {
             <LoadingSpinner />
           </div>
           <div>Transaction HASH: {pendingTransactionHash}</div>
-          <a href={`https://sepolia.etherscan.io/tx/${pendingTransactionHash}`}>
+          <a
+            href={`https://sepolia.etherscan.io/tx/${pendingTransactionHash}`}
+            target="_blank"
+          >
             Etherscan URL
           </a>
         </div>
