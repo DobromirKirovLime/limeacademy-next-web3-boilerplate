@@ -3,6 +3,7 @@ import { useWeb3React } from "@web3-react/core";
 import { useEffect, useState } from "react";
 import useUSElectionContract from "../hooks/useUSElectionContract";
 import LoadingSpinner from "./LoadingSpinner";
+import { useDebouncer } from "../hooks/useDebouncer";
 
 type USContract = {
   contractAddress: string;
@@ -35,23 +36,13 @@ const USLibrary = ({ contractAddress }: USContract) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<any>(undefined);
 
-  useEffect(() => {
-    getCurrentLeader();
-    getCurrentSeats();
-  }, []);
-
-  const getCurrentLeader = async () => {
-    const currentLeader = await usElectionContract.currentLeader();
-    setElectionState((prev) => ({
-      ...prev,
-      currentLeader:
-        currentLeader == Leader.UNKNOWN
-          ? "Unknown"
-          : currentLeader == Leader.BIDEN
-          ? "Biden"
-          : "Trump",
-    }));
-  };
+  const {
+    currentLeader,
+    votesBiden,
+    votesTrump,
+    electionStateName,
+    electionStateSeats,
+  } = electionState;
 
   const stateInput = (input) => {
     setElectionState((prev) => ({
@@ -81,14 +72,6 @@ const USLibrary = ({ contractAddress }: USContract) => {
     }));
   };
 
-  const {
-    currentLeader,
-    votesBiden,
-    votesTrump,
-    electionStateName,
-    electionStateSeats,
-  } = electionState;
-
   const submitStateResults = async () => {
     try {
       setLoading(true);
@@ -108,11 +91,39 @@ const USLibrary = ({ contractAddress }: USContract) => {
     }
   };
 
+  const getCurrentLeader = async () => {
+    const currentLeader = await usElectionContract.currentLeader();
+    setElectionState((prev) => ({
+      ...prev,
+      currentLeader:
+        currentLeader == Leader.UNKNOWN
+          ? "Unknown"
+          : currentLeader == Leader.BIDEN
+          ? "Biden"
+          : "Trump",
+    }));
+  };
+
   const getCurrentSeats = async () => {
     try {
       const biden = await usElectionContract.seats(Leader.BIDEN);
       const trump = await usElectionContract.seats(Leader.TRUMP);
       setCurrentSeatsWon({ biden, trump });
+    } catch (err) {
+      setError(JSON.parse(JSON.stringify(err)));
+    }
+  };
+
+  const getStateStatus = async () => {
+    try {
+      const isStateAlreadySubmitted = await usElectionContract.resultSubmitted(
+        electionStateName
+      );
+
+      if (isStateAlreadySubmitted) {
+        return setError("This state has already submitted their results!");
+      }
+      setError(undefined);
     } catch (err) {
       setError(JSON.parse(JSON.stringify(err)));
     }
@@ -125,6 +136,13 @@ const USLibrary = ({ contractAddress }: USContract) => {
     getCurrentLeader();
     getCurrentSeats();
   };
+
+  useDebouncer(getStateStatus, electionStateName, 600);
+
+  useEffect(() => {
+    getCurrentLeader();
+    getCurrentSeats();
+  }, []);
 
   return (
     <div className="results-form">
@@ -173,7 +191,7 @@ const USLibrary = ({ contractAddress }: USContract) => {
         </label>
       </form>
       <div className="button-wrapper">
-        <button onClick={submitStateResults}>Submit Results</button>
+        <button onClick={submitStateResults} disabled={error}>Submit Results</button>
       </div>
       {loading && (
         <div className="results-loading">
@@ -190,7 +208,9 @@ const USLibrary = ({ contractAddress }: USContract) => {
           </a>
         </div>
       )}
-      {error && <div className="results-error">{error?.error?.message}</div>}
+      {error && (
+        <div className="results-error">{error?.error?.message || error}</div>
+      )}
     </div>
   );
 };
