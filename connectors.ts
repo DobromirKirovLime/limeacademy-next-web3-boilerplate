@@ -1,6 +1,6 @@
-import { supportedMetamaskNetworks } from './constants';
+import { supportedMetamaskNetworks } from "./constants";
 import { InjectedConnector } from "@web3-react/injected-connector";
-import { WalletConnectConnector } from '@web3-react/walletconnect-connector';
+import { WalletConnectConnector } from "@web3-react/walletconnect-connector";
 import { walletConnectSupportedNetworks } from "./constants";
 
 export const injected = new InjectedConnector({
