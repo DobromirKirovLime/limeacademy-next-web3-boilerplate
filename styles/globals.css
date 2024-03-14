@@ -161,3 +161,17 @@ a {
   gap: 15px;
   min-width: 300px;
 }
+
+.lib-books {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 20px;
+}
+
+.lib-book-card {
+  padding: 5px;
+  border-radius: 10px;
+  border: 1px solid grey;
+  background-color: #e4e4e4;
+}

@@ -2,6 +2,9 @@ import React, { useEffect, useState } from "react";
 import useLibraryContract from "../hooks/useLibraryContract";
 import { useWeb3React } from "@web3-react/core";
 import LoadingSpinner from "./LoadingSpinner";
+import BookCard from "./BookCard";
+import Input from "./Input";
+import Ul from "./Ul";
 
 interface LibraryProps {
   contractAddress: any;
@@ -29,10 +32,11 @@ const Library = ({ contractAddress }: LibraryProps) => {
   const { account } = useWeb3React();
   const libraryContract = useLibraryContract(contractAddress);
   const [isOwner, setIsOwner] = useState(false);
-  const [activePage, setActivePage] = useState<string>(Actions.ADD_BOOK);
+  const [activePage, setActivePage] = useState<string>(Actions.BORROW);
   const [libraryState, setLibraryState] = useState(libraryInitialState);
   const [pendingTransactionHash, setPendingTransactionHash] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(undefined);
   const [specificBook, setSpecificBook] = useState(specificBookInitialState);
   const [userBooks, setUserBooks] = useState(undefined);
 
@@ -47,9 +51,11 @@ const Library = ({ contractAddress }: LibraryProps) => {
     setLibraryState(libraryInitialState);
     setSpecificBook(specificBookInitialState);
     setActivePage(e.currentTarget.innerText);
+    setError(undefined);
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setError(undefined);
     const inputName = e.currentTarget.name;
     const inputValue = e.currentTarget.value;
 
@@ -68,18 +74,24 @@ const Library = ({ contractAddress }: LibraryProps) => {
   };
 
   const checkSpecificBook = async (id) => {
-    const checkBook = await libraryContract.books(Number(id));
-    setSpecificBook({
-      id: checkBook.id.toNumber(),
-      name: checkBook.name,
-      copies: checkBook.copies.toNumber(),
-    });
+    try {
+      const checkBook = await libraryContract.books(Number(id));
 
-    return {
-      id: checkBook.id.toNumber(),
-      name: checkBook.name,
-      copies: checkBook.copies.toNumber(),
-    };
+      setSpecificBook({
+        id: checkBook.id.toNumber(),
+        name: checkBook.name,
+        copies: checkBook.copies.toNumber(),
+      });
+
+      return {
+        id: checkBook.id.toNumber(),
+        name: checkBook.name,
+        copies: checkBook.copies.toNumber(),
+      };
+    } catch (err) {
+      setError(err);
+      setLoading(false);
+    }
   };
 
   const handleFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -88,42 +100,66 @@ const Library = ({ contractAddress }: LibraryProps) => {
 
     switch (activePage) {
       case Actions.ADD_BOOK:
-        const addBookTx = await libraryContract.addBook(
-          Number(bookId),
-          bookName,
-          Number(copies)
-        );
-        setPendingTransactionHash(addBookTx.hash);
-        const receipt = await addBookTx.wait();
-        console.log(receipt);
+        try {
+          const addBookTx = await libraryContract.addBook(
+            Number(bookId),
+            bookName,
+            Number(copies)
+          );
+          setPendingTransactionHash(addBookTx.hash);
+          const receipt = await addBookTx.wait();
+        } catch (err) {
+          setError(err);
+          setLoading(false);
+        }
 
         break;
 
       case Actions.ADD_COPIES:
-        const addCopiesTx = await libraryContract.addCopies(
-          Number(bookId),
-          Number(copies)
-        );
-        setPendingTransactionHash(addCopiesTx.hash);
-        await addCopiesTx.wait();
+        try {
+          const addCopiesTx = await libraryContract.addCopies(
+            Number(bookId),
+            Number(copies)
+          );
+          setPendingTransactionHash(addCopiesTx.hash);
+          await addCopiesTx.wait();
+        } catch (err) {
+          setError(err);
+          setLoading(false);
+        }
         break;
 
       case Actions.DELETE:
-        const deleteTx = await libraryContract.removeBook(Number(bookId));
-        setPendingTransactionHash(deleteTx.hash);
-        await deleteTx.wait();
+        try {
+          const deleteTx = await libraryContract.removeBook(Number(bookId));
+          setPendingTransactionHash(deleteTx.hash);
+          await deleteTx.wait();
+        } catch (err) {
+          setError(err);
+          setLoading(false);
+        }
         break;
 
       case Actions.BORROW:
-        const borrowTx = await libraryContract.getBook(Number(bookId));
-        setPendingTransactionHash(borrowTx.hash);
-        await borrowTx.wait();
+        try {
+          const borrowTx = await libraryContract.getBook(Number(bookId));
+          setPendingTransactionHash(borrowTx.hash);
+          await borrowTx.wait();
+        } catch (err) {
+          setError(err);
+          setLoading(loading);
+        }
         break;
 
       case Actions.RETURN:
-        const returnTx = await libraryContract.returnBook(Number(bookId));
-        setPendingTransactionHash(returnTx.hash);
-        await returnTx.wait();
+        try {
+          const returnTx = await libraryContract.returnBook(Number(bookId));
+          setPendingTransactionHash(returnTx.hash);
+          await returnTx.wait();
+        } catch (err) {
+          setError(err);
+          setLoading(false);
+        }
         break;
 
       case Actions.CHECK_SPECIFIC:
@@ -148,148 +184,133 @@ const Library = ({ contractAddress }: LibraryProps) => {
     getUserBooks();
   }, []);
 
-  // add book by click
-  // add copies by click
-  // del book by click
-  // borrow book by click
-  // return book by click
-  // check specific book by click
-  // check my borrowed books on render
-
   return (
     <div className="lib">
       <div className="lib-nav">
         <h3>LimeLibrary</h3>
         {isOwner && (
-          <>
-            <p>Owner Section</p>
-            <ul className="lib-nav-section admin">
-              <li onClick={handleActivePage}>{Actions.ADD_BOOK}</li>
-              <li onClick={handleActivePage}>{Actions.ADD_COPIES}</li>
-              <li onClick={handleActivePage}>{Actions.DELETE}</li>
-            </ul>
-          </>
+          <Ul
+            ulName="Owner Section"
+            items={[Actions.ADD_BOOK, Actions.ADD_COPIES, Actions.DELETE]}
+            onClick={handleActivePage}
+          />
         )}
-        <p>User Section</p>
-        <ul className="lib-nav-section">
-          <li onClick={handleActivePage}>{Actions.BORROW}</li>
-          <li onClick={handleActivePage}>{Actions.RETURN}</li>
-          <li onClick={handleActivePage}>{Actions.CHECK_SPECIFIC}</li>
-          <li onClick={handleActivePage}>{Actions.MY_BOOKS}</li>
-        </ul>
+        <Ul
+          ulName="User Section"
+          items={[
+            Actions.BORROW,
+            Actions.RETURN,
+            Actions.CHECK_SPECIFIC,
+            Actions.MY_BOOKS,
+          ]}
+          onClick={handleActivePage}
+        />
       </div>
       <form onSubmit={handleFormSubmit} className="lib-form">
         <div className="lib-section">
           <h3>{activePage}</h3>
           {activePage === Actions.ADD_BOOK && (
             <>
-              <label htmlFor="bookId">Book ID</label>
-              <input
-                onChange={handleInputChange}
+              <Input
+                id="bookId"
+                label="Book ID"
+                type="number"
                 value={bookId}
-                type="number"
-                name="bookId"
-              />
-              <label htmlFor="bookName">Book name</label>
-              <input
                 onChange={handleInputChange}
-                value={bookName}
+              />
+              <Input
+                id="bookName"
+                label="Book Name"
                 type="text"
-                name="bookName"
-              />
-              <label htmlFor="copies">Book copies</label>
-              <input
+                value={bookName}
                 onChange={handleInputChange}
-                value={copies}
+              />
+              <Input
+                id="copies"
+                label="Book Copies"
                 type="number"
-                name="copies"
+                value={copies}
+                onChange={handleInputChange}
               />
             </>
           )}
           {activePage === Actions.ADD_COPIES && (
             <>
-              <label htmlFor="bookId">Book ID</label>
-              <input
-                onChange={handleInputChange}
+              <Input
+                id="bookId"
+                label="Book ID"
+                type="number"
                 value={bookId}
-                type="number"
-                name="bookId"
-              />
-              <label htmlFor="copies">Copies</label>
-              <input
                 onChange={handleInputChange}
-                value={copies}
+              />
+              <Input
+                id="copies"
+                label="Book Copies"
                 type="number"
-                name="copies"
+                value={copies}
+                onChange={handleInputChange}
               />
             </>
           )}
           {activePage === Actions.DELETE && (
-            <>
-              <label htmlFor="bookId">Book ID</label>
-              <input
-                onChange={handleInputChange}
-                value={bookId}
-                type="number"
-                name="bookId"
-              />
-            </>
+            <Input
+              id="bookId"
+              label="Book ID"
+              type="number"
+              value={bookId}
+              onChange={handleInputChange}
+            />
           )}
           {activePage === Actions.BORROW && (
-            <>
-              <label htmlFor="bookId">Book ID</label>
-              <input
-                onChange={handleInputChange}
-                value={bookId}
-                type="number"
-                name="bookId"
-              />
-            </>
+            <Input
+              id="bookId"
+              label="Book ID"
+              type="number"
+              value={bookId}
+              onChange={handleInputChange}
+            />
           )}
           {activePage === Actions.RETURN && (
-            <>
-              <label htmlFor="bookId">Book ID</label>
-              <input
-                onChange={handleInputChange}
-                value={bookId}
-                type="number"
-                name="bookId"
-              />
-            </>
+            <Input
+              id="bookId"
+              label="Book ID"
+              type="number"
+              value={bookId}
+              onChange={handleInputChange}
+            />
           )}
           {activePage === Actions.CHECK_SPECIFIC && (
-            <>
-              <label htmlFor="bookId">Book ID</label>
-              <input
-                onChange={handleInputChange}
-                value={bookId}
-                type="number"
-                name="bookId"
-              />
-            </>
+            <Input
+              id="bookId"
+              label="Book ID"
+              type="number"
+              value={bookId}
+              onChange={handleInputChange}
+            />
           )}
           {activePage !== Actions.MY_BOOKS && (
             <button type="submit">Submit</button>
           )}
+          {specificBook.name && activePage === Actions.CHECK_SPECIFIC && (
+            <BookCard
+              id={specificBook.id}
+              name={specificBook.name}
+              copies={specificBook.copies}
+            />
+          )}
           {activePage === Actions.MY_BOOKS && (
-            <div>
+            <div className="lib-books">
               {userBooks.map((book) => {
                 return (
-                  <div key={book.id}>
-                    <p>№: {book.id}</p>
-                    <p>{book.name}</p>
-                    <p>Available copies: {book.copies}</p>
-                  </div>
+                  <BookCard
+                    key={book.id}
+                    id={book.id}
+                    name={book.name}
+                    copies={book.copies}
+                  />
                 );
               })}
             </div>
-          )}
-          {specificBook.name && activePage === Actions.CHECK_SPECIFIC && (
-            <>
-              <p>№: {specificBook.id}</p>
-              <p>{specificBook.name}</p>
-              <p>Available copies: {specificBook.copies}</p>
-            </>
           )}
         </div>
         {loading && (
@@ -305,6 +326,11 @@ const Library = ({ contractAddress }: LibraryProps) => {
             >
               Etherscan URL
             </a>
+          </div>
+        )}
+        {error && (
+          <div className="results-error">
+            {error?.error?.message || error?.message || "Unexpected error!"}
           </div>
         )}
       </form>
