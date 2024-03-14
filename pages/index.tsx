@@ -5,8 +5,14 @@ import Account from "../components/Account";
 import NativeCurrencyBalance from "../components/NativeCurrencyBalance";
 import TokenBalance from "../components/TokenBalance";
 import USLibrary from "../components/USLibrary";
-import { ALBT_TOKEN_ADDRESS, US_ELECTION_ADDRESS } from "../constants";
+import {
+  ALBT_TOKEN_ADDRESS,
+  US_ELECTION_ADDRESS,
+  LIBRARY_ADDRESS,
+} from "../constants";
 import useEagerConnect from "../hooks/useEagerConnect";
+import Library from "../components/Library";
+import { useState } from "react";
 
 function Home() {
   const { account, library } = useWeb3React();
@@ -14,6 +20,8 @@ function Home() {
   const triedToEagerConnect = useEagerConnect();
 
   const isConnected = typeof account === "string" && !!library;
+
+  const [activeApp, setActiveApp] = useState("");
 
   return (
     <div>
@@ -42,10 +50,22 @@ function Home() {
 
         {isConnected && (
           <section>
-            <NativeCurrencyBalance />
-            {/* Not sure wy we need this and will comment it out for now */}
-            {/* <TokenBalance tokenAddress={ALBT_TOKEN_ADDRESS} symbol="ALBT" /> */}
-            <USLibrary contractAddress={US_ELECTION_ADDRESS} />
+            <div className="section-header">
+              <NativeCurrencyBalance />
+              {/* Not sure wy we need this and will comment it out for now */}
+              {/* <TokenBalance tokenAddress={ALBT_TOKEN_ADDRESS} symbol="ALBT" /> */}
+              <button onClick={() => setActiveApp("elections")}>
+                US Elections
+              </button>
+              <button onClick={() => setActiveApp("library")}>Library</button>
+            </div>
+            <hr />
+            {activeApp === "elections" && (
+              <USLibrary contractAddress={US_ELECTION_ADDRESS} />
+            )}
+            {activeApp === "library" && (
+              <Library contractAddress={LIBRARY_ADDRESS} />
+            )}
           </section>
         )}
       </main>
@@ -55,7 +75,6 @@ function Home() {
           display: flex;
           justify-content: space-between;
         }
-
         main {
           text-align: center;
         }
