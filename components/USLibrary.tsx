@@ -63,7 +63,10 @@ const USLibrary = ({ contractAddress }: USContract) => {
       const submitStateResultsTx = await usElectionContract.submitStateResult(
         result
       );
+
       setPendingTransactionHash(submitStateResultsTx.hash);
+      await submitStateResultsTx.wait();
+
       resetForm();
     } catch (err) {
       setLoading(false);
