@@ -23,3 +23,5 @@ export const ALBT_TOKEN_ADDRESS = "0xc6869a93ef55e1d8ec8fdcda89c9d93616cf0a72";
 export const US_ELECTION_ADDRESS = "0x11f86B655DEf9dEf1CFFa683c5629eB60B5ce305";
 
 export const LIBRARY_ADDRESS = "0x8487cfb7E0F37eD820EB8a0030Fc395CEC588CA3";
+
+export const coinDeskApi = "https://production.api.coindesk.com/v2";

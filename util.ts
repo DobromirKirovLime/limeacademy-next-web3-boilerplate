@@ -36,3 +36,10 @@ export const parseBalance = (
   decimals = 18,
   decimalsToDisplay = 3
 ) => parseFloat(formatUnits(value, decimals)).toFixed(decimalsToDisplay);
+
+export const getCurrentDateTimeWithOffset = (offset = 0) => {
+  let currentDateTime = new Date();
+  currentDateTime.setMinutes(currentDateTime.getMinutes() - offset);
+  let formattedDateTime = currentDateTime.toISOString().slice(0, 16);
+  return formattedDateTime;
+};
