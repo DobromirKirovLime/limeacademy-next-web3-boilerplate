@@ -77,12 +77,6 @@ const Library = ({ contractAddress }: LibraryProps) => {
     try {
       const checkBook = await libraryContract.books(Number(id));
 
-      setSpecificBook({
-        id: checkBook.id.toNumber(),
-        name: checkBook.name,
-        copies: checkBook.copies.toNumber(),
-      });
-
       return {
         id: checkBook.id.toNumber(),
         name: checkBook.name,
@@ -163,7 +157,8 @@ const Library = ({ contractAddress }: LibraryProps) => {
         break;
 
       case Actions.CHECK_SPECIFIC:
-        checkSpecificBook(bookId);
+        const result = await checkSpecificBook(bookId);
+        setSpecificBook(result);
         break;
 
       default:
