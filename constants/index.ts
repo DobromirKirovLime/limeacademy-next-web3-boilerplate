@@ -24,4 +24,6 @@ export const US_ELECTION_ADDRESS = "0x11f86B655DEf9dEf1CFFa683c5629eB60B5ce305";
 
 export const LIBRARY_ADDRESS = "0x8487cfb7E0F37eD820EB8a0030Fc395CEC588CA3";
 
+export const LMT_ADDRESS = "0xB9a2FF50cACaf948Fd0bdbFE8F3E7D0fDeA1bADF";
+
 export const coinDeskApi = "https://production.api.coindesk.com/v2";

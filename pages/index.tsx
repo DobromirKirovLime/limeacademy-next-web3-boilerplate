@@ -5,10 +5,12 @@ import Account from "../components/Account";
 import NativeCurrencyBalance from "../components/NativeCurrencyBalance";
 import TokenBalance from "../components/TokenBalance";
 import USLibrary from "../components/USLibrary";
+import LimeToken from "../components/LimeToken";
 import {
   ALBT_TOKEN_ADDRESS,
   US_ELECTION_ADDRESS,
   LIBRARY_ADDRESS,
+  LMT_ADDRESS,
 } from "../constants";
 import useEagerConnect from "../hooks/useEagerConnect";
 import Library from "../components/Library";
@@ -58,6 +60,9 @@ function Home() {
                 US Elections
               </button>
               <button onClick={() => setActiveApp("library")}>Library</button>
+              <button onClick={() => setActiveApp("lmt")}>
+                LimeToken (LMT)
+              </button>
             </div>
             <hr />
             {activeApp === "elections" && (
@@ -66,6 +71,7 @@ function Home() {
             {activeApp === "library" && (
               <Library contractAddress={LIBRARY_ADDRESS} />
             )}
+            {activeApp === "lmt" && <LimeToken contractAddress={LMT_ADDRESS} />}
           </section>
         )}
       </main>

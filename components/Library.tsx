@@ -29,7 +29,7 @@ const libraryInitialState = {
 const specificBookInitialState = { id: 0, name: "", copies: 0 };
 
 const Library = ({ contractAddress }: LibraryProps) => {
-  const { account } = useWeb3React();
+  const { account, library } = useWeb3React();
   const libraryContract = useLibraryContract(contractAddress);
   const [isOwner, setIsOwner] = useState(false);
   const [activePage, setActivePage] = useState<string>(Actions.BORROW);
@@ -65,6 +65,7 @@ const Library = ({ contractAddress }: LibraryProps) => {
   const getUserBooks = async () => {
     const getUserBooksTx = await libraryContract.getCustomerRecord();
     const borrowedBooks = await Promise.all(
+      // for off
       getUserBooksTx.map(async (b) => {
         const resp = await checkSpecificBook(b.toNumber());
         return resp;
@@ -76,7 +77,6 @@ const Library = ({ contractAddress }: LibraryProps) => {
   const checkSpecificBook = async (id) => {
     try {
       const checkBook = await libraryContract.books(Number(id));
-
       return {
         id: checkBook.id.toNumber(),
         name: checkBook.name,
