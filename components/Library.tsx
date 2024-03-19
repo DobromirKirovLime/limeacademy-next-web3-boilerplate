@@ -5,6 +5,9 @@ import LoadingSpinner from "./LoadingSpinner";
 import BookCard from "./BookCard";
 import Input from "./Input";
 import Ul from "./Ul";
+import useTokenContract from "../hooks/useTokenContract";
+import { parseEther } from "@ethersproject/units";
+import { LIB_TOKEN_ADDRESS } from "../constants";
 
 interface LibraryProps {
   contractAddress: any;
@@ -29,8 +32,9 @@ const libraryInitialState = {
 const specificBookInitialState = { id: 0, name: "", copies: 0 };
 
 const Library = ({ contractAddress }: LibraryProps) => {
-  const { account, library } = useWeb3React();
+  const { account } = useWeb3React();
   const libraryContract = useLibraryContract(contractAddress);
+  const libToken = useTokenContract(LIB_TOKEN_ADDRESS);
   const [isOwner, setIsOwner] = useState(false);
   const [activePage, setActivePage] = useState<string>(Actions.BORROW);
   const [libraryState, setLibraryState] = useState(libraryInitialState);
@@ -65,7 +69,6 @@ const Library = ({ contractAddress }: LibraryProps) => {
   const getUserBooks = async () => {
     const getUserBooksTx = await libraryContract.getCustomerRecord();
     const borrowedBooks = await Promise.all(
-      // for off
       getUserBooksTx.map(async (b) => {
         const resp = await checkSpecificBook(b.toNumber());
         return resp;
@@ -136,8 +139,25 @@ const Library = ({ contractAddress }: LibraryProps) => {
 
       case Actions.BORROW:
         try {
+          const allowanceTx = await libToken.allowance(
+            account,
+            contractAddress
+          );
+
+          const needsApproval =
+            Number(allowanceTx.toString()) - 100000000000000 <= 0;
+
+          if (needsApproval) {
+            const approveTx = await libToken.approve(
+              contractAddress,
+              parseEther("0.0005")
+            );
+            await approveTx.wait();
+          }
+
           const borrowTx = await libraryContract.getBook(Number(bookId));
           setPendingTransactionHash(borrowTx.hash);
+
           await borrowTx.wait();
         } catch (err) {
           setError(err);

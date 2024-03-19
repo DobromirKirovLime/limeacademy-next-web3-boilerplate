@@ -3,11 +3,9 @@ import Head from "next/head";
 import Link from "next/link";
 import Account from "../components/Account";
 import NativeCurrencyBalance from "../components/NativeCurrencyBalance";
-import TokenBalance from "../components/TokenBalance";
 import USLibrary from "../components/USLibrary";
 import LimeToken from "../components/LimeToken";
 import {
-  ALBT_TOKEN_ADDRESS,
   US_ELECTION_ADDRESS,
   LIBRARY_ADDRESS,
   LMT_ADDRESS,
@@ -15,6 +13,7 @@ import {
 import useEagerConnect from "../hooks/useEagerConnect";
 import Library from "../components/Library";
 import { useState } from "react";
+import LibraryToken from "../components/LibraryToken";
 
 function Home() {
   const { account, library } = useWeb3React();
@@ -54,14 +53,15 @@ function Home() {
           <section>
             <div className="section-header">
               <NativeCurrencyBalance />
-              {/* Not sure wy we need this and will comment it out for now */}
-              {/* <TokenBalance tokenAddress={ALBT_TOKEN_ADDRESS} symbol="ALBT" /> */}
               <button onClick={() => setActiveApp("elections")}>
                 US Elections
               </button>
               <button onClick={() => setActiveApp("library")}>Library</button>
               <button onClick={() => setActiveApp("lmt")}>
                 LimeToken (LMT)
+              </button>
+              <button onClick={() => setActiveApp("lib")}>
+                LibraryToken (LIB)
               </button>
             </div>
             <hr />
@@ -72,6 +72,7 @@ function Home() {
               <Library contractAddress={LIBRARY_ADDRESS} />
             )}
             {activeApp === "lmt" && <LimeToken contractAddress={LMT_ADDRESS} />}
+            {activeApp === 'lib' && <LibraryToken contractAddress={LIBRARY_ADDRESS} />}
           </section>
         )}
       </main>
