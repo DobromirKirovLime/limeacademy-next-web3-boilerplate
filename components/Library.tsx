@@ -17,7 +17,7 @@ enum Actions {
   ADD_BOOK = "Add Book",
   ADD_COPIES = "Add Copies",
   DELETE = "Delete Book",
-  BORROW = "Borrow Book",
+  RENT = "Rent Book",
   RETURN = "Return Book",
   CHECK_SPECIFIC = "Check Specific Book",
   MY_BOOKS = "My Borrowed Books",
@@ -36,7 +36,7 @@ const Library = ({ contractAddress }: LibraryProps) => {
   const libraryContract = useLibraryContract(contractAddress);
   const libToken = useTokenContract(LIB_TOKEN_ADDRESS);
   const [isOwner, setIsOwner] = useState(false);
-  const [activePage, setActivePage] = useState<string>(Actions.BORROW);
+  const [activePage, setActivePage] = useState<string>(Actions.RENT);
   const [libraryState, setLibraryState] = useState(libraryInitialState);
   const [pendingTransactionHash, setPendingTransactionHash] = useState("");
   const [loading, setLoading] = useState(false);
@@ -137,7 +137,7 @@ const Library = ({ contractAddress }: LibraryProps) => {
         }
         break;
 
-      case Actions.BORROW:
+      case Actions.RENT:
         try {
           const allowanceTx = await libToken.allowance(
             account,
@@ -213,7 +213,7 @@ const Library = ({ contractAddress }: LibraryProps) => {
         <Ul
           ulName="User Section"
           items={[
-            Actions.BORROW,
+            Actions.RENT,
             Actions.RETURN,
             Actions.CHECK_SPECIFIC,
             Actions.MY_BOOKS,
@@ -276,14 +276,17 @@ const Library = ({ contractAddress }: LibraryProps) => {
               onChange={handleInputChange}
             />
           )}
-          {activePage === Actions.BORROW && (
-            <Input
-              id="bookId"
-              label="Book ID"
-              type="number"
-              value={bookId}
-              onChange={handleInputChange}
-            />
+          {activePage === Actions.RENT && (
+            <>
+              <Input
+                id="bookId"
+                label="Book ID"
+                type="number"
+                value={bookId}
+                onChange={handleInputChange}
+              />
+              <p>Cost: 0.0001 LIB</p>
+            </>
           )}
           {activePage === Actions.RETURN && (
             <Input

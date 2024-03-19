@@ -71,24 +71,23 @@ const LibraryToken = ({ contractAddress }: LibraryTokenProps) => {
     }
   };
 
-  // get the balance from the token contract with .balanceOff(address)
-  // on lib page try to make transactions from user addres to contrct addres
-
   return (
-    <div>
+    <div className="lib-token">
       <p>Transfer ETH to LIB 1:1</p>
       <Input
         id="amount"
-        label="Amount in wei "
+        label="Amount in ETH "
         onChange={handleValueChange}
         value={amount}
       />
-      <button onClick={handleEthToLib} disabled={loading}>
-        Convert
-      </button>
-      <button onClick={handleLibToEth} disabled={loading}>
-        Revert
-      </button>
+      <div className="button-wrapper">
+        <button onClick={handleEthToLib} disabled={loading}>
+          From ETH
+        </button>
+        <button onClick={handleLibToEth} disabled={loading}>
+          To ETH
+        </button>
+      </div>
       {loading && (
         <div className="results-loading">
           <div>
