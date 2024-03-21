@@ -10,7 +10,7 @@ import useTokenContract from "../hooks/useTokenContract";
 import { parseEther } from "@ethersproject/units";
 import { LIB_TOKEN_ADDRESS } from "../constants";
 import { showNotification } from "../util";
-import { ethers } from "ethers";
+import { ethers, utils } from "ethers";
 import LibraryABI from "../contracts/Library.json";
 
 interface LibraryProps {
@@ -54,12 +54,12 @@ const Library = ({ contractAddress }: LibraryProps) => {
     const iface = new ethers.utils.Interface(LibraryABI);
     const encodedData = iface.encodeFunctionData("getBook", [bookId]);
 
-    const signer = library.getSigner();
-
     const tx = {
       to: contractAddress,
       data: encodedData,
     };
+
+    const signer = library.getSigner();
     const receipt = await signer.sendTransaction(tx);
     setPendingTransactionHash(receipt.hash);
     await receipt.wait();
