@@ -22,6 +22,7 @@ enum Actions {
   ADD_COPIES = "Add Copies",
   DELETE = "Delete Book",
   RENT = "Rent Book",
+  RENT_SIG = "Rent for somebody",
   RETURN = "Return Book",
   CHECK_SPECIFIC = "Check Specific Book",
   MY_BOOKS = "My Borrowed Books",
@@ -31,6 +32,9 @@ const libraryInitialState = {
   bookId: 0,
   bookName: "",
   copies: 0,
+  address: "",
+  msgHash: "",
+  signedMsg: "",
 };
 
 const specificBookInitialState = { id: 0, name: "", copies: 0 };
@@ -48,7 +52,8 @@ const Library = ({ contractAddress }: LibraryProps) => {
   const [specificBook, setSpecificBook] = useState(specificBookInitialState);
   const [userBooks, setUserBooks] = useState(undefined);
 
-  const { bookId, bookName, copies } = libraryState;
+  const { bookId, bookName, copies, address, msgHash, signedMsg } =
+    libraryState;
 
   const getBookWithManualEncoding = async () => {
     const iface = new ethers.utils.Interface(LibraryABI);
@@ -185,6 +190,27 @@ const Library = ({ contractAddress }: LibraryProps) => {
         }
         break;
 
+      case Actions.RENT_SIG:
+        setLoading(true);
+        try {
+          const sig = utils.splitSignature(signedMsg);
+          const rentWithSignature = await libraryContract.getBookWithSignature(
+            bookId,
+            msgHash,
+            sig.v,
+            sig.r,
+            sig.s,
+            address
+          );
+          setPendingTransactionHash(rentWithSignature.hash);
+          await rentWithSignature.wait();
+          setLoading(false);
+        } catch (err) {
+          setError(err);
+          setLoading(false);
+        }
+        break;
+
       case Actions.RETURN:
         try {
           const returnTx = await libraryContract.returnBook(Number(bookId));
@@ -283,6 +309,7 @@ const Library = ({ contractAddress }: LibraryProps) => {
           ulName="User Section"
           items={[
             Actions.RENT,
+            Actions.RENT_SIG,
             Actions.RETURN,
             Actions.CHECK_SPECIFIC,
             Actions.MY_BOOKS,
@@ -355,6 +382,38 @@ const Library = ({ contractAddress }: LibraryProps) => {
                 onChange={handleInputChange}
               />
               <p>Cost: 0.0001 LIB</p>
+            </>
+          )}
+          {activePage === Actions.RENT_SIG && (
+            <>
+              <Input
+                id="bookId"
+                label="Book ID"
+                type="number"
+                value={bookId}
+                onChange={handleInputChange}
+              />
+              <Input
+                id="address"
+                label="Reciever address"
+                type="text"
+                value={address}
+                onChange={handleInputChange}
+              />
+              <Input
+                id="msgHash"
+                label="Reciever hashed msg"
+                type="text"
+                value={msgHash}
+                onChange={handleInputChange}
+              />
+              <Input
+                id="signedMsg"
+                label="Reciever signed msg"
+                type="text"
+                value={signedMsg}
+                onChange={handleInputChange}
+              />
             </>
           )}
           {activePage === Actions.RETURN && (
