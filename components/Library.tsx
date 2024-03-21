@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import useLibraryContract from "../hooks/useLibraryContract";
 import { useWeb3React } from "@web3-react/core";
+import type { Web3Provider } from "@ethersproject/providers";
 import LoadingSpinner from "./LoadingSpinner";
 import BookCard from "./BookCard";
 import Input from "./Input";
@@ -9,6 +10,8 @@ import useTokenContract from "../hooks/useTokenContract";
 import { parseEther } from "@ethersproject/units";
 import { LIB_TOKEN_ADDRESS } from "../constants";
 import { showNotification } from "../util";
+import { ethers } from "ethers";
+import LibraryABI from "../contracts/Library.json";
 
 interface LibraryProps {
   contractAddress: any;
@@ -33,7 +36,7 @@ const libraryInitialState = {
 const specificBookInitialState = { id: 0, name: "", copies: 0 };
 
 const Library = ({ contractAddress }: LibraryProps) => {
-  const { account } = useWeb3React();
+  const { account, library } = useWeb3React<Web3Provider>();
   const libraryContract = useLibraryContract(contractAddress);
   const libToken = useTokenContract(LIB_TOKEN_ADDRESS);
   const [isOwner, setIsOwner] = useState(false);
@@ -46,6 +49,21 @@ const Library = ({ contractAddress }: LibraryProps) => {
   const [userBooks, setUserBooks] = useState(undefined);
 
   const { bookId, bookName, copies } = libraryState;
+
+  const getBookWithManualEncoding = async () => {
+    const iface = new ethers.utils.Interface(LibraryABI);
+    const encodedData = iface.encodeFunctionData("getBook", [bookId]);
+
+    const signer = library.getSigner();
+
+    const tx = {
+      to: contractAddress,
+      data: encodedData,
+    };
+    const receipt = await signer.sendTransaction(tx);
+    setPendingTransactionHash(receipt.hash);
+    await receipt.wait();
+  };
 
   const getOwner = async () => {
     const getOwnerTx = await libraryContract.owner();
@@ -155,11 +173,10 @@ const Library = ({ contractAddress }: LibraryProps) => {
             );
             await approveTx.wait();
           }
-
-          const borrowTx = await libraryContract.getBook(Number(bookId));
-          setPendingTransactionHash(borrowTx.hash);
-
-          await borrowTx.wait();
+          await getBookWithManualEncoding();
+          // const borrowTx = await libraryContract.getBook(Number(bookId));
+          // setPendingTransactionHash(borrowTx.hash);
+          // await borrowTx.wait();
         } catch (err) {
           setError(err);
           setLoading(loading);
@@ -245,7 +262,7 @@ const Library = ({ contractAddress }: LibraryProps) => {
     return () => {
       libToken.removeAllListeners();
       libraryContract.removeAllListeners();
-    }
+    };
   }, []);
 
   return (
