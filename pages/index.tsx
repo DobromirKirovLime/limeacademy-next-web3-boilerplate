@@ -47,7 +47,7 @@ function Home() {
 
       <main>
         <h1>
-          Welcome to{" "}
+          Welcome to
           <a href="https://github.com/LimeChain/next-web3-boilerplate">
             LimeAcademy-boilerplate
           </a>

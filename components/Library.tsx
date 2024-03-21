@@ -174,6 +174,8 @@ const Library = ({ contractAddress }: LibraryProps) => {
             await approveTx.wait();
           }
           await getBookWithManualEncoding();
+
+          // This is the same as the getBookWithManualEncoding()
           // const borrowTx = await libraryContract.getBook(Number(bookId));
           // setPendingTransactionHash(borrowTx.hash);
           // await borrowTx.wait();
@@ -216,6 +218,7 @@ const Library = ({ contractAddress }: LibraryProps) => {
     getOwner();
     getUserBooks();
 
+    // All the listeners for all events that are emited from the smart contract
     libToken.on("Transfer", (from, to, value) => {
       console.log();
       showNotification(

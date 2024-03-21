@@ -33,7 +33,10 @@ const LibraryToken = ({ contractAddress }: LibraryTokenProps) => {
     const inputValue = e.currentTarget.value;
     setAmount(inputValue);
   };
-
+  
+  /**
+   * Converts ETH to LIB tokens
+   */
   const handleEthToLib = async () => {
     setLoading(true);
     try {
@@ -53,6 +56,9 @@ const LibraryToken = ({ contractAddress }: LibraryTokenProps) => {
     }
   };
 
+  /**
+   * Converts LIB tokes back to ETH
+   */
   const handleLibToEth = async () => {
     setLoading(true);
     try {
@@ -82,6 +88,10 @@ const LibraryToken = ({ contractAddress }: LibraryTokenProps) => {
     }
   };
 
+  /**
+   * This function returns all the LIB tokens thet were colected by the smart contract
+   * and sends them to the owner address.
+   */
   const handleWithdraw = async () => {
     setLoading(true);
     try {
