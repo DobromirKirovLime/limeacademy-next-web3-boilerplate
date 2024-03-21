@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Input from "./Input";
 import LoadingSpinner from "./LoadingSpinner";
 import { parseEther } from "@ethersproject/units";
@@ -17,8 +17,14 @@ const LibraryToken = ({ contractAddress }: LibraryTokenProps) => {
   const libToken = useTokenContract(LIB_TOKEN_ADDRESS);
   const [amount, setAmount] = useState("");
   const [pendingTransactionHash, setPendingTransactionHash] = useState("");
+  const [isOwner, setIsOwner] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(undefined);
+
+  const getOwner = async () => {
+    const getOwnerTx = await libContract.owner();
+    setIsOwner(getOwnerTx === account);
+  };
 
   const handleValueChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setError(undefined);
@@ -71,6 +77,22 @@ const LibraryToken = ({ contractAddress }: LibraryTokenProps) => {
     }
   };
 
+  const handleWithdraw = async () => {
+    setLoading(true);
+    try {
+      const withdraw = await libContract.withdrawMoney();
+      await withdraw.wait();
+      setLoading(false);
+    } catch (err) {
+      setLoading(false);
+      setError(err);
+    }
+  };
+
+  useEffect(() => {
+    getOwner();
+  }, []);
+
   return (
     <div className="lib-token">
       <p>Transfer ETH to LIB 1:1</p>
@@ -88,6 +110,11 @@ const LibraryToken = ({ contractAddress }: LibraryTokenProps) => {
           To ETH
         </button>
       </div>
+      {isOwner && (
+        <div>
+          <button onClick={handleWithdraw}>Withdraw</button>
+        </div>
+      )}
       {loading && (
         <div className="results-loading">
           <div>

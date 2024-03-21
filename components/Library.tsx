@@ -8,6 +8,7 @@ import Ul from "./Ul";
 import useTokenContract from "../hooks/useTokenContract";
 import { parseEther } from "@ethersproject/units";
 import { LIB_TOKEN_ADDRESS } from "../constants";
+import { showNotification } from "../util";
 
 interface LibraryProps {
   contractAddress: any;
@@ -197,6 +198,54 @@ const Library = ({ contractAddress }: LibraryProps) => {
   useEffect(() => {
     getOwner();
     getUserBooks();
+
+    libToken.on("Transfer", (from, to, value) => {
+      console.log();
+      showNotification(
+        "Transfer",
+        `From: \n${from}\n\nTo: \n${to}\n\nAmount: ${value.toString()}`
+      );
+    });
+
+    libraryContract.on("LogBookAdded", (id, name, copies) => {
+      showNotification(
+        "Book Added",
+        `BookID: ${id.toString()}\nName: ${name}\nCopies: ${copies.toString()}`
+      );
+    });
+
+    libraryContract.on("LogCopiesAdded", (id, copies) => {
+      showNotification(
+        "Copies added",
+        `BookID: ${id.toString()}\nCopies added: ${copies.toString()}`
+      );
+    });
+
+    libraryContract.on("LogBookRemoved", (id) => {
+      showNotification(
+        "Book removed",
+        `Book with ID ${id.toString()} was removed!`
+      );
+    });
+
+    libraryContract.on("LogBookWasTaken", (id, byAddress) => {
+      showNotification(
+        "Book was taken",
+        `BookID: ${id.toString()}\nWas taken by: ${byAddress}`
+      );
+    });
+
+    libraryContract.on("LogBookWasReturned", (id) => {
+      showNotification(
+        "Book was returned",
+        `Book with ID ${id.toString()} returned!`
+      );
+    });
+
+    return () => {
+      libToken.removeAllListeners();
+      libraryContract.removeAllListeners();
+    }
   }, []);
 
   return (

@@ -12,7 +12,7 @@ import {
 } from "../constants";
 import useEagerConnect from "../hooks/useEagerConnect";
 import Library from "../components/Library";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import LibraryToken from "../components/LibraryToken";
 
 function Home() {
@@ -23,6 +23,10 @@ function Home() {
   const isConnected = typeof account === "string" && !!library;
 
   const [activeApp, setActiveApp] = useState("");
+
+  useEffect(() => {
+    navigator.serviceWorker.register("/sw.js");
+  }, []);
 
   return (
     <div>
@@ -72,7 +76,9 @@ function Home() {
               <Library contractAddress={LIBRARY_ADDRESS} />
             )}
             {activeApp === "lmt" && <LimeToken contractAddress={LMT_ADDRESS} />}
-            {activeApp === 'lib' && <LibraryToken contractAddress={LIBRARY_ADDRESS} />}
+            {activeApp === "lib" && (
+              <LibraryToken contractAddress={LIBRARY_ADDRESS} />
+            )}
           </section>
         )}
       </main>

@@ -1,5 +1,6 @@
 import type { BigNumberish } from "@ethersproject/bignumber";
 import { formatUnits } from "@ethersproject/units";
+import { LIME_ICON } from "./constants";
 
 export function shortenHex(hex: string, length = 4) {
   return `${hex.substring(0, length + 2)}…${hex.substring(
@@ -42,4 +43,17 @@ export const getCurrentDateTimeWithOffset = (offset = 0) => {
   currentDateTime.setMinutes(currentDateTime.getMinutes() - offset);
   let formattedDateTime = currentDateTime.toISOString().slice(0, 16);
   return formattedDateTime;
+};
+
+export const showNotification = (header: string, body: string) => {
+  Notification.requestPermission().then((result) => {
+    if (result === "granted") {
+      navigator.serviceWorker.ready.then((registration) => {
+        registration.showNotification(header, {
+          body,
+          icon: LIME_ICON,
+        });
+      });
+    }
+  });
 };
