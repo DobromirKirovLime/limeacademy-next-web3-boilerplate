@@ -5,7 +5,7 @@ import { parseEther } from "@ethersproject/units";
 import { useWeb3React } from "@web3-react/core";
 import type { Web3Provider } from "@ethersproject/providers";
 import useLibraryContract from "../hooks/useLibraryContract";
-import useTokenContract from "../hooks/useTokenContract";
+import useTokenContract from "../hooks/useLibTokenContract";
 import { LIB_TOKEN_ADDRESS, SIGNED_MSG_ADDRESS_A } from "../constants";
 import { utils } from "ethers";
 
@@ -33,7 +33,7 @@ const LibraryToken = ({ contractAddress }: LibraryTokenProps) => {
     const inputValue = e.currentTarget.value;
     setAmount(inputValue);
   };
-  
+
   /**
    * Converts ETH to LIB tokens
    */

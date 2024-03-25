@@ -4,7 +4,7 @@ import useNativeCurrencyBalance from "../hooks/useNativeCurrencyBalance";
 import { parseBalance } from "../util";
 import useEthPrice from "../hooks/useEthPrice";
 import { LIB_TOKEN_ADDRESS } from "../constants";
-import useTokenContract from "../hooks/useTokenContract";
+import useTokenContract from "../hooks/useLibTokenContract";
 import { useEffect, useState } from "react";
 import { formatEther } from "@ethersproject/units";
 

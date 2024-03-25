@@ -6,7 +6,7 @@ import LoadingSpinner from "./LoadingSpinner";
 import BookCard from "./BookCard";
 import Input from "./Input";
 import Ul from "./Ul";
-import useTokenContract from "../hooks/useTokenContract";
+import useTokenContract from "../hooks/useLibTokenContract";
 import { parseEther } from "@ethersproject/units";
 import { LIB_TOKEN_ADDRESS } from "../constants";
 import { showNotification } from "../util";
@@ -115,6 +115,71 @@ const Library = ({ contractAddress }: LibraryProps) => {
     }
   };
 
+  const onAttemptToApprove = async () => {
+    const nonce = await libToken.nonces(account); // Our Token Contract Nonces
+
+    const deadline = +new Date() + 60 * 60; // Permit with deadline which the permit is valid
+
+    const wrapValue = utils.parseEther("0.0001"); // Value to approve for the spender to use
+
+    const EIP712Domain = [
+      // array of objects -> properties from the contract and the types of them ircwithPermit
+      { name: "name", type: "string" },
+      { name: "version", type: "string" },
+      { name: "verifyingContract", type: "address" },
+    ];
+
+    const domain = {
+      name: await libToken.name(),
+      version: "1",
+      verifyingContract: libToken.address,
+    };
+
+    const Permit = [
+      // array of objects -> properties from erc20withpermit
+      { name: "owner", type: "address" },
+      { name: "spender", type: "address" },
+      { name: "value", type: "uint256" },
+      { name: "nonce", type: "uint256" },
+      { name: "deadline", type: "uint256" },
+    ];
+
+    const message = {
+      owner: account,
+      spender: contractAddress,
+      value: wrapValue.toString(),
+      nonce: nonce.toHexString(),
+      deadline,
+    };
+
+    const data = JSON.stringify({
+      types: {
+        EIP712Domain,
+        Permit,
+      },
+      domain,
+      primaryType: "Permit",
+      message,
+    });
+
+    const signatureLike = await library.send("eth_signTypedData_v4", [
+      account,
+      data,
+    ]);
+
+    const signature = utils.splitSignature(signatureLike);
+
+    const preparedSignature = {
+      v: signature.v,
+      r: signature.r,
+      s: signature.s,
+      deadline,
+      wrapValue,
+    };
+
+    return preparedSignature;
+  };
+
   const handleFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
@@ -163,27 +228,43 @@ const Library = ({ contractAddress }: LibraryProps) => {
 
       case Actions.RENT:
         try {
-          const allowanceTx = await libToken.allowance(
-            account,
-            contractAddress
-          );
-
-          const needsApproval =
-            Number(allowanceTx.toString()) - 100000000000000 <= 0;
-
-          if (needsApproval) {
-            const approveTx = await libToken.approve(
-              contractAddress,
-              parseEther("0.0005")
-            );
-            await approveTx.wait();
-          }
-          await getBookWithManualEncoding();
-
+          // This is used in getBookWithManualEncoding() & libraryContract.getBook()
+          //
+          // const allowanceTx = await libToken.allowance(
+          //   account,
+          //   contractAddress
+          // );
+          // const needsApproval =
+          //   Number(allowanceTx.toString()) - 100000000000000 <= 0;
+          // if (needsApproval) {
+          //   const approveTx = await libToken.approve(
+          //     contractAddress,
+          //     parseEther("0.0005")
+          //   );
+          //   await approveTx.wait();
+          // }
+          //
+          // This is the second way of doing it
+          // await getBookWithManualEncoding();
+          //
           // This is the same as the getBookWithManualEncoding()
           // const borrowTx = await libraryContract.getBook(Number(bookId));
           // setPendingTransactionHash(borrowTx.hash);
           // await borrowTx.wait();
+
+          const { wrapValue, deadline, v, r, s } = await onAttemptToApprove();
+
+          const rentBookTx = await libraryContract.getBookWithPermit(
+            bookId,
+            wrapValue,
+            deadline,
+            v,
+            r,
+            s
+          );
+          setPendingTransactionHash(rentBookTx.hash);
+          await rentBookTx.wait();
+          setLoading(false);
         } catch (err) {
           setError(err);
           setLoading(loading);
@@ -246,7 +327,6 @@ const Library = ({ contractAddress }: LibraryProps) => {
 
     // All the listeners for all events that are emited from the smart contract
     libToken.on("Transfer", (from, to, value) => {
-      console.log();
       showNotification(
         "Transfer",
         `From: \n${from}\n\nTo: \n${to}\n\nAmount: ${value.toString()}`
